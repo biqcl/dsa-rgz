@@ -3,12 +3,11 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
-import os  # Нужен для os.environ
+import os
 
 app = Flask(__name__)
 
-# ИСПРАВЛЕНИЕ: Берем секретный ключ ИЗ ПЕРЕМЕННОЙ ОКРУЖЕНИЯ
-# Если переменной нет, используем значение для разработки
+# Используем GitHub Secrets
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-key-for-local-only')
 
 # Настройка Flask-Login
@@ -16,18 +15,17 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login_page'
 
-# Конфигурация БД
+# КОНФИГУРАЦИЯ БД - ОСТАЁТСЯ expense_diary
 DB_CONFIG = {
-    "dbname": "expense_diary",
+    "dbname": "expense_diary",  # ← ТАК И ОСТАЁТСЯ!
     "user": "postgres",
     "password": "postgres",
     "host": "localhost",
     "port": "5432"
 }
 
-
 class User(UserMixin):
-    def __init__(self, id, username):
+    def init(self, id, username):
         self.id = id
         self.username = username
 

@@ -1,17 +1,13 @@
-# test_app.py
 import pytest
-import os
-import sys
 from app import app
 import json
 
-# Добавляем путь к текущей директории
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 @pytest.fixture
 def client():
+    """Фикстура для тестового клиента"""
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False
+    
     with app.test_client() as client:
         with app.app_context():
             yield client
@@ -19,8 +15,8 @@ def client():
 def test_register(client):
     """Тест регистрации пользователя"""
     response = client.post('/register', json={
-        'username': 'postgres',
-        'password': 'postgres'
+        'username': 'testuser123',
+        'password': 'password123'
     })
     # Должен вернуть 201 (создан) или 400 (уже существует)
     assert response.status_code in [201, 400]
@@ -67,8 +63,8 @@ def test_add_expense(client):
 def test_list_expenses(client):
     """Тест получения списка расходов"""
     response = client.get('/list')
-    # Может вернуть 401 (не авторизован) или 200
-    assert response.status_code in [200, 401]
+    # Может вернуть 401 (не авторизован) или 302 (редирект на логин)
+    assert response.status_code in [200, 401, 302]
 
 if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+    pytest.main([file, '-v'])

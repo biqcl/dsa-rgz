@@ -16,7 +16,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: expense_diary
+          POSTGRES_DB: expense_diary  # ← МЕНЯЕМ НА expense_diary!
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -36,46 +36,22 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Устанавливаем зависимости
         pip install flask flask-login psycopg2-binary werkzeug pytest bandit
     
     - name: Run security check with Bandit
       env:
-        # ПЕРЕДАЕМ СЕКРЕТНЫЙ КЛЮЧ ЧЕРЕЗ SECRETS
         FLASK_SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY || 'test-secret-for-ci' }}
-        FLASK_DEBUG: 'False'  # Отключаем debug mode
+        FLASK_DEBUG: 'False'
       run: |
-        echo "Running Bandit security check..."
+        echo "🔒 Running Bandit security check..."
         bandit -r app.py
-        echo "Bandit check completed successfully!"
-    
-    - name: Set up environment variables for tests
-      run: |
-        echo "Setting up test environment..."
-        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_db" >> $GITHUB_ENV
-        echo "FLASK_SECRET_KEY=test-secret-key-for-ci-cd" >> $GITHUB_ENV
-        echo "FLASK_DEBUG=False" >> $GITHUB_ENV
-        echo "DB_NAME=test_db" >> $GITHUB_ENV
-        echo "DB_USER=postgres" >> $GITHUB_ENV
-        echo "DB_PASSWORD=postgres" >> $GITHUB_ENV
-        echo "DB_HOST=localhost" >> $GITHUB_ENV
-        echo "DB_PORT=5432" >> $GITHUB_ENV
+        echo "✅ Bandit check completed successfully!"
     
     - name: Run tests
-      env:
-        # Все переменные окружения для тестов
-        FLASK_SECRET_KEY: test-secret-key-for-ci-cd
-        FLASK_DEBUG: False
-        DB_NAME: test_db
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-        DB_HOST: localhost
-        DB_PORT: 5432
       run: |
-        echo "Running unit tests..."
+        echo "🧪 Running unit tests..."
         python -m pytest test_app.py -v
-        echo "All tests passed!"
-    
+        
   deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -84,24 +60,5 @@ jobs:
     steps:
     - name: Deploy to production
       run: |
-        echo "All tests passed!"
-        echo "Ready for deployment"
-        echo ""
-        echo "Deployment instructions:"
-        echo "1. Connect to your server (SSH)"
-        echo "2. Pull the latest code:"
-        echo "   git pull origin main"
-        echo "3. Install dependencies:"
-        echo "   pip install -r requirements.txt"
-        echo "4. Set environment variables (create .env file or use systemd):"
-        echo "   export FLASK_SECRET_KEY='your-secret-key-from-github-secrets'"
-        echo "   export FLASK_DEBUG=False"
-        echo "   export DB_NAME=expense_diary"
-        echo "   export DB_USER=your_db_user"
-        echo "   export DB_PASSWORD=your_db_password"
-        echo "   export DB_HOST=localhost"
-        echo "   export DB_PORT=5432"
-        echo "5. Restart the application:"
-        echo "   sudo systemctl restart your-app.service"
-        echo ""
-        echo "Deployment configuration ready!"
+        echo "✅ All tests passed!"
+        echo "🚀 Ready for deployment"
