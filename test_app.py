@@ -19,8 +19,8 @@ def client():
 def test_register(client):
     """Тест регистрации пользователя"""
     response = client.post('/register', json={
-        'username': 'testuser123',
-        'password': 'password123'
+        'username': 'postgres',
+        'password': 'postgres'
     })
     # Должен вернуть 201 (создан) или 400 (уже существует)
     assert response.status_code in [201, 400]
