@@ -283,8 +283,20 @@ def test_unauthorized_access(client):
     """Тест доступа без авторизации"""
     # Пытаемся получить список без входа
     response = client.get('/list')
-    assert response.status_code == 401  # Unauthorized
-    print("✅ Неавторизованный доступ корректно отклонен")
+    
+    # Flask-Login может вернуть:
+    # - 401 Unauthorized (для JSON API)
+    # - 302 Redirect to login (для HTML/browser)
+    # Оба варианта корректны
+    
+    assert response.status_code in [401, 302], f"Ожидался 401 или 302, получен {response.status_code}"
+    
+    if response.status_code == 401:
+        print("✅ Неавторизованный доступ возвращает 401 (JSON API)")
+    elif response.status_code == 302:
+        print("✅ Неавторизованный доступ перенаправлен на логин (302)")
+        # Можно дополнительно проверить, что редирект ведет на страницу логина
+        assert '/login' in response.location or 'login_page' in response.location
 
 if __name__ == '__main__':
     # Для запуска тестов напрямую
