@@ -3,9 +3,11 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-for-local-only')
 
 # Настройка Flask-Login
 login_manager = LoginManager()
@@ -278,7 +280,7 @@ def edit_expense(expense_id):
     category = data.get('category')
     description = data.get('description')
     
-    # Проверка принадлежности
+    # Проверка принадлежности записи пользователю
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT user_id FROM expenses WHERE id = %s", (expense_id,))
@@ -292,54 +294,72 @@ def edit_expense(expense_id):
         else:
             return redirect(url_for('list_page'))
     
-    # Обновление
-    update_fields = []
-    values = []
+    # ИСПРАВЛЕНИЕ SQL-INJECTION: 
+    # Вместо динамического построения запроса f-string используем отдельные проверки
     
-    if amount is not None:
-        try:
-            amount = float(amount)
-            if amount <= 0:
-                if return_json:
-                    return jsonify({"error": "Amount must be positive"}), 400
-                else:
-                    return redirect(url_for('list_page'))
-            update_fields.append("amount = %s")
-            values.append(amount)
-        except ValueError:
+    try:
+        # Вариант 1: Если переданы все поля
+        if amount is not None and category is not None:
+            amount_float = float(amount)
+            if amount_float <= 0:
+                raise ValueError("Amount must be positive")
+            
+            # Безопасный параметризованный запрос
+            cur.execute("""
+                UPDATE expenses 
+                SET amount = %s, category = %s, description = %s 
+                WHERE id = %s
+            """, (amount_float, category, description, expense_id))
+            
+        # Вариант 2: Обновление только суммы
+        elif amount is not None:
+            amount_float = float(amount)
+            if amount_float <= 0:
+                raise ValueError("Amount must be positive")
+            cur.execute("UPDATE expenses SET amount = %s WHERE id = %s", 
+                       (amount_float, expense_id))
+            
+        # Вариант 3: Обновление только категории
+        elif category is not None:
+            cur.execute("UPDATE expenses SET category = %s WHERE id = %s", 
+                       (category, expense_id))
+            
+        # Вариант 4: Обновление только описания
+        elif description is not None:
+            cur.execute("UPDATE expenses SET description = %s WHERE id = %s", 
+                       (description, expense_id))
+            
+        else:
             if return_json:
-                return jsonify({"error": "Invalid amount"}), 400
+                return jsonify({"error": "No fields to update"}), 400
             else:
                 return redirect(url_for('list_page'))
-    
-    if category is not None:
-        update_fields.append("category = %s")
-        values.append(category)
-    
-    if description is not None:
-        update_fields.append("description = %s")
-        values.append(description)
-    
-    if not update_fields:
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        log_audit(current_user.id, "edit", expense_id)
+        
         if return_json:
-            return jsonify({"error": "No fields to update"}), 400
+            return jsonify({"message": "Expense updated"})
         else:
             return redirect(url_for('list_page'))
-    
-    values.append(expense_id)
-    query = f"UPDATE expenses SET {', '.join(update_fields)} WHERE id = %s"
-    
-    cur.execute(query, tuple(values))
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    log_audit(current_user.id, "edit", expense_id)
-    
-    if return_json:
-        return jsonify({"message": "Expense updated"})
-    else:
-        return redirect(url_for('list_page'))
+            
+    except ValueError as e:
+        cur.close()
+        conn.close()
+        if return_json:
+            return jsonify({"error": str(e)}), 400
+        else:
+            return redirect(url_for('list_page'))
+    except Exception as e:
+        cur.close()
+        conn.close()
+        if return_json:
+            return jsonify({"error": "Server error"}), 500
+        else:
+            return redirect(url_for('list_page'))
 
 @app.route('/delete/<int:expense_id>', methods=['POST'])
 @login_required
