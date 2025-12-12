@@ -25,7 +25,7 @@ DB_CONFIG = {
 }
 
 class User(UserMixin):
-    def init(self, id, username):
+    def __init__(self, id, username):
         self.id = id
         self.username = username
 
