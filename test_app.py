@@ -67,4 +67,4 @@ def test_list_expenses(client):
     assert response.status_code in [200, 401, 302]
 
 if __name__ == '__main__':
-    pytest.main([file, '-v'])
+    pytest.main([__file__, '-v'])
