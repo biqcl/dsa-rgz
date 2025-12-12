@@ -489,4 +489,4 @@ def delete_html(expense_id):
 if __name__ == '__main__':
     from models import create_tables
     create_tables()
-    app.run(debug=True)
+    app.run(debug=False)
