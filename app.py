@@ -3,11 +3,13 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
+import os  # Нужен для os.environ
 
 app = Flask(__name__)
 
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-for-local-only')
+# ИСПРАВЛЕНИЕ: Берем секретный ключ ИЗ ПЕРЕМЕННОЙ ОКРУЖЕНИЯ
+# Если переменной нет, используем значение для разработки
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-key-for-local-only')
 
 # Настройка Flask-Login
 login_manager = LoginManager()
@@ -22,6 +24,7 @@ DB_CONFIG = {
     "host": "localhost",
     "port": "5432"
 }
+
 
 class User(UserMixin):
     def __init__(self, id, username):
