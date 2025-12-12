@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Добавить расход</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h2>Добавить расход</h2>
+    
+    <p>
+        <a href="/list_page">← Назад к списку</a> | 
+        <a href="/logout">Выйти</a>
+    </p>
+    
+    {% if error %}
+        <p style="color: red;"><strong>{{ error }}</strong></p>
+    {% endif %}
+    
+    <form method="POST" action="/add">
+        <p>
+            <label>Сумма (₽):</label><br>
+            <input type="number" name="amount" step="0.01" min="0.01" required>
+        </p>
+        
+        <p>
+            <label>Категория:</label><br>
+            <select name="category" required>
+                <option value="">Выберите категорию</option>
+                <option value="Еда">Еда</option>
+                <option value="Транспорт">Транспорт</option>
+                <option value="Жилье">Жилье</option>
+                <option value="Развлечения">Развлечения</option>
+                <option value="Здоровье">Здоровье</option>
+                <option value="Образование">Образование</option>
+                <option value="Другое">Другое</option>
+            </select>
+        </p>
+        
+        <p>
+            <label>Описание:</label><br>
+            <textarea name="description" rows="3"></textarea>
+        </p>
+        
+        <button type="submit">Добавить</button>
+    </form>
+</body>
+</html>

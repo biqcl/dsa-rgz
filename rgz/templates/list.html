@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Мои расходы</title>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .actions form { display: inline; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Мои расходы</h2>
+    
+    <p>
+        <a href="/add_page">➕ Добавить расход</a> | 
+        <a href="/logout">Выйти</a>
+    </p>
+    
+    {% if expenses %}
+        <table>
+            <tr>
+                <th>Дата</th>
+                <th>Категория</th>
+                <th>Описание</th>
+                <th>Сумма</th>
+                <th>Действия</th>
+            </tr>
+            
+            {% for expense in expenses %}
+            <tr>
+                <td>
+                    {% if expense.created_at %}
+                        {{ expense.created_at.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ expense.category }}</td>
+                <td>{{ expense.description if expense.description else '-' }}</td>
+                <td>{{ "%.2f"|format(expense.amount) }} ₽</td>
+                <td class="actions">
+                    <!-- Ссылка на страницу редактирования -->
+                    <a href="/edit_page/{{ expense.id }}">✏️ Редактировать</a>
+                    
+                    <!-- Форма для удаления -->
+                    <form action="/delete_html/{{ expense.id }}" method="POST" style="display: inline;">
+                        <button type="submit" onclick="return confirm('Удалить эту запись?')">🗑️ Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+        <p>
+            <strong>Всего записей:</strong> {{ expenses|length }}<br>
+            <strong>Общая сумма:</strong> 
+            {% set total = expenses|sum(attribute='amount') %}
+            {{ "%.2f"|format(total) }} ₽
+        </p>
+    {% else %}
+        <p>У вас пока нет расходов. <a href="/add_page">Добавьте первую запись!</a></p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Редактировать расход</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; max-width: 500px; margin: 20px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 8px; }
+        .buttons { margin-top: 20px; }
+        button { padding: 10px 20px; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h2>✏️ Редактировать расход</h2>
+    
+    <p><a href="/list_page">← Назад к списку расходов</a></p>
+    
+    <form method="POST" action="/update_expense/{{ expense.id }}">
+        <div class="form-group">
+            <label>Сумма (₽):</label>
+            <input type="number" name="amount" value="{{ expense.amount }}" step="0.01" min="0.01" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Категория:</label>
+            <select name="category" required>
+                <option value="Еда" {% if expense.category == 'Еда' %}selected{% endif %}>Еда</option>
+                <option value="Транспорт" {% if expense.category == 'Транспорт' %}selected{% endif %}>Транспорт</option>
+                <option value="Жилье" {% if expense.category == 'Жилье' %}selected{% endif %}>Жилье</option>
+                <option value="Развлечения" {% if expense.category == 'Развлечения' %}selected{% endif %}>Развлечения</option>
+                <option value="Здоровье" {% if expense.category == 'Здоровье' %}selected{% endif %}>Здоровье</option>
+                <option value="Образование" {% if expense.category == 'Образование' %}selected{% endif %}>Образование</option>
+                <option value="Другое" {% if expense.category == 'Другое' %}selected{% endif %}>Другое</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Описание:</label>
+            <textarea name="description" rows="3">{{ expense.description or '' }}</textarea>
+        </div>
+        
+        <div class="buttons">
+            <button type="submit">💾 Сохранить изменения</button>
+            <a href="/list_page"><button type="button">❌ Отмена</button></a>
+        </div>
+    </form>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Вход</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h2>Вход в Дневник расходов</h2>
+    
+    {% if error %}
+        <p style="color: red;"><strong>{{ error }}</strong></p>
+    {% endif %}
+    
+    <form method="POST" action="/login">
+        <p>
+            <label>Имя пользователя:</label><br>
+            <input type="text" name="username" required>
+        </p>
+        
+        <p>
+            <label>Пароль:</label><br>
+            <input type="password" name="password" required>
+        </p>
+        
+        <button type="submit">Войти</button>
+    </form>
+    
+    <p>Нет аккаунта? <a href="/register_page">Зарегистрироваться</a></p>
+</body>
+</html>
