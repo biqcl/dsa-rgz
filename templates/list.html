@@ -3,6 +3,7 @@
 <head>
     <title>Мои расходы</title>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -14,7 +15,8 @@
     <h2>Мои расходы</h2>
     
     <p>
-        <a href="/add_page">➕ Добавить расход</a> | 
+        <h3>Здравствуйте, <span>{{ current_user.username }}!</span></h3>
+        <a href="/add_page">Добавить расход</a> | 
         <a href="/logout">Выйти</a>
     </p>
     
@@ -41,10 +43,7 @@
                 <td>{{ expense.description if expense.description else '-' }}</td>
                 <td>{{ "%.2f"|format(expense.amount) }} ₽</td>
                 <td class="actions">
-                    <!-- Ссылка на страницу редактирования -->
                     <a href="/edit_page/{{ expense.id }}">✏️ Редактировать</a>
-                    
-                    <!-- Форма для удаления -->
                     <form action="/delete_html/{{ expense.id }}" method="POST" style="display: inline;">
                         <button type="submit" onclick="return confirm('Удалить эту запись?')">🗑️ Удалить</button>
                     </form>
@@ -60,7 +59,7 @@
             {{ "%.2f"|format(total) }} ₽
         </p>
     {% else %}
-        <p>У вас пока нет расходов. <a href="/add_page">Добавьте первую запись!</a></p>
+        <p><b>У вас пока нет расходов</b></p>
     {% endif %}
 </body>
 </html>

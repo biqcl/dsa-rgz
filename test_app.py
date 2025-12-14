@@ -3,7 +3,7 @@ from app import app
 import json
 import psycopg2
 
-# Конфигурация базы данных для тестов (такая же как в app.py)
+# Конфигурация базы данных для тестов
 TEST_DB_CONFIG = {
     "dbname": "expense_diary",
     "user": "postgres",
@@ -13,17 +13,17 @@ TEST_DB_CONFIG = {
 }
 
 def create_test_tables():
-    """Создает таблицы для тестов (очищает и создает заново)"""
+    # Создание таблиц для тестов
     try:
         conn = psycopg2.connect(**TEST_DB_CONFIG)
         cur = conn.cursor()
         
-        # Очищаем существующие таблицы
+        # Очистка существующих таблиц
         cur.execute("DROP TABLE IF EXISTS audit_log CASCADE")
         cur.execute("DROP TABLE IF EXISTS expenses CASCADE")
         cur.execute("DROP TABLE IF EXISTS users CASCADE")
         
-        # Создаем таблицы заново
+        # Создание таблиц заново
         cur.execute("""
             CREATE TABLE users (
                 id SERIAL PRIMARY KEY,
@@ -56,26 +56,26 @@ def create_test_tables():
         conn.commit()
         cur.close()
         conn.close()
-        print("✅ Тестовые таблицы созданы")
+        print("Тестовые таблицы созданы")
         return True
         
     except Exception as e:
-        print(f"❌ Ошибка создания тестовых таблиц: {e}")
+        print(f"Ошибка создания тестовых таблиц: {e}")
         return False
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
-    """Фикстура: создает таблицы перед всеми тестами"""
-    print("\n🔧 Настраиваю тестовую базу данных...")
+    # Создание таблиц перед всеми тестами
+    print("\Настройка тестовых баз данных...")
     success = create_test_tables()
     if not success:
         pytest.exit("Не удалось создать тестовые таблицы")
     yield
-    print("\n🧹 Тесты завершены, база очищена")
+    print("\nТесты завершены, база очищена")
 
 @pytest.fixture
 def client():
-    """Фикстура для тестового клиента Flask"""
+    # Подготовка данных для тестового клиента Flask
     app.config['TESTING'] = True
     app.config['SECRET_KEY'] = 'test-secret-key'
     app.config['WTF_CSRF_ENABLED'] = False
@@ -84,51 +84,46 @@ def client():
         with app.app_context():
             yield client
 
-# ========== ТЕСТЫ ==========
-
-def test_register(client):
-    """Тест регистрации пользователя"""
+# Тест регистрации пользователя
+def test_register(client):    
     response = client.post('/register', json={
         'username': 'testuser1',
         'password': 'password123'
     })
     
-    # Проверяем успешную регистрацию
+    # Проверка регистрации
     assert response.status_code == 201
     data = json.loads(response.data)
     assert 'message' in data
     assert 'user_id' in data
-    print(f"✅ Пользователь зарегистрирован: ID {data['user_id']}")
+    print(f"Пользователь зарегистрирован: ID {data['user_id']}")
 
+# Тест регистрации с существующим именем
 def test_register_duplicate(client):
-    """Тест регистрации с существующим именем"""
     # Первая регистрация
     client.post('/register', json={
         'username': 'duplicateuser',
         'password': 'password123'
     })
-    
-    # Вторая попытка с тем же именем
+        # Вторая попытка с тем же именем
     response = client.post('/register', json={
         'username': 'duplicateuser',
         'password': 'password456'
     })
-    
-    # Должна быть ошибка
+        # Должна быть ошибка
     assert response.status_code == 400
     data = json.loads(response.data)
     assert 'error' in data
-    print("✅ Дубликат пользователя корректно отклонен")
+    print("Дубликат пользователя корректно отклонен")
 
+ # Тест входа пользователя
 def test_login(client):
-    """Тест входа пользователя"""
-    # Сначала регистрируем
+       # Сначала регистрируем
     client.post('/register', json={
         'username': 'loginuser',
         'password': 'mypassword'
     })
-    
-    # Пытаемся войти
+        # Пытаемся войти
     response = client.post('/login', json={
         'username': 'loginuser',
         'password': 'mypassword'
@@ -137,10 +132,11 @@ def test_login(client):
     assert response.status_code == 200
     data = json.loads(response.data)
     assert data['message'] == 'Logged in'
-    print("✅ Вход выполнен успешно")
+    print("Вход выполнен успешно")
 
+# Тест входа с неверным паролем
 def test_login_wrong_password(client):
-    """Тест входа с неверным паролем"""
+ 
     client.post('/register', json={
         'username': 'wrongpassuser',
         'password': 'correct123'
@@ -154,10 +150,10 @@ def test_login_wrong_password(client):
     assert response.status_code == 401
     data = json.loads(response.data)
     assert 'error' in data
-    print("✅ Неверный пароль корректно отклонен")
-
+    print("Неверный пароль корректно отклонен")
+    
+# Тест добавления расхода
 def test_add_expense(client):
-    """Тест добавления расхода"""
     # Сначала регистрируем и логиним
     client.post('/register', json={
         'username': 'expenseuser',
@@ -174,10 +170,10 @@ def test_add_expense(client):
     data = json.loads(response.data)
     assert 'message' in data
     assert 'expense_id' in data
-    print(f"✅ Расход добавлен: ID {data['expense_id']}")
+    print(f"Расход добавлен: ID {data['expense_id']}")
 
+# Тест добавления расхода с некорректными данными
 def test_add_expense_invalid(client):
-    """Тест добавления расхода с некорректными данными"""
     client.post('/register', json={
         'username': 'invaliduser',
         'password': 'password123'
@@ -190,10 +186,10 @@ def test_add_expense_invalid(client):
     })
     
     assert response.status_code == 400
-    print("✅ Некорректный расход отклонен")
+    print("Некорректный расход отклонен")
 
+# Тест получения списка расходов
 def test_list_expenses(client):
-    """Тест получения списка расходов"""
     # Сначала регистрируем
     client.post('/register', json={
         'username': 'listuser',
@@ -211,11 +207,11 @@ def test_list_expenses(client):
     data = json.loads(response.data)
     assert 'expenses' in data
     assert len(data['expenses']) == 2
-    print(f"✅ Получено {len(data['expenses'])} расходов")
+    print(f"Получено {len(data['expenses'])} расходов")
 
+# Тест редактирования расхода
 def test_edit_expense(client):
-    """Тест редактирования расхода"""
-    # Регистрируем и добавляем расход
+     # Регистрируем и добавляем расход
     client.post('/register', json={
         'username': 'edituser',
         'password': 'editpass'
@@ -236,10 +232,11 @@ def test_edit_expense(client):
     })
     
     assert response.status_code == 200
-    print("✅ Расход успешно отредактирован")
+    print("Расход успешно отредактирован")
 
+# Тест удаления расхода
 def test_delete_expense(client):
-    """Тест удаления расхода"""
+
     client.post('/register', json={
         'username': 'deleteuser',
         'password': 'deletepass'
@@ -257,10 +254,10 @@ def test_delete_expense(client):
     assert response.status_code == 200
     data = json.loads(response.data)
     assert data['message'] == 'Expense deleted'
-    print("✅ Расход успешно удален")
+    print("Расход успешно удален")
 
+# Тест получения логов аудита
 def test_audit_log(client):
-    """Тест получения логов аудита"""
     client.post('/register', json={
         'username': 'audituser',
         'password': 'auditpass'
@@ -275,27 +272,22 @@ def test_audit_log(client):
     assert response.status_code == 200
     data = json.loads(response.data)
     assert 'audit_logs' in data
-    # Должна быть хотя бы одна запись (регистрация + добавление)
+    # Должна быть хотя бы одна запись
     assert len(data['audit_logs']) >= 1
-    print(f"✅ Получено {len(data['audit_logs'])} записей аудита")
+    print(f"Получено {len(data['audit_logs'])} записей аудита")
 
+# Тест доступа без авторизации
 def test_unauthorized_access(client):
-    """Тест доступа без авторизации"""
     # Пытаемся получить список без входа
     response = client.get('/list')
-    
-    # Flask-Login может вернуть:
-    # - 401 Unauthorized (для JSON API)
-    # - 302 Redirect to login (для HTML/browser)
-    # Оба варианта корректны
-    
+        
     assert response.status_code in [401, 302], f"Ожидался 401 или 302, получен {response.status_code}"
     
     if response.status_code == 401:
-        print("✅ Неавторизованный доступ возвращает 401 (JSON API)")
+        print("Неавторизованный доступ возвращает 401 (JSON API)")
     elif response.status_code == 302:
-        print("✅ Неавторизованный доступ перенаправлен на логин (302)")
-        # Можно дополнительно проверить, что редирект ведет на страницу логина
+        print("Неавторизованный доступ перенаправлен на логин (302)")
+        # Проверка того, что редирект ведет на страницу логина
         assert '/login' in response.location or 'login_page' in response.location
 
 if __name__ == '__main__':

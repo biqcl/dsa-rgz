@@ -3,6 +3,7 @@
 <head>
     <title>Редактировать расход</title>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body { font-family: Arial; max-width: 500px; margin: 20px auto; padding: 20px; }
         .form-group { margin-bottom: 15px; }
@@ -13,7 +14,7 @@
     </style>
 </head>
 <body>
-    <h2>✏️ Редактировать расход</h2>
+    <h2>Редактировать расход</h2>
     
     <p><a href="/list_page">← Назад к списку расходов</a></p>
     
@@ -42,8 +43,8 @@
         </div>
         
         <div class="buttons">
-            <button type="submit">💾 Сохранить изменения</button>
-            <a href="/list_page"><button type="button">❌ Отмена</button></a>
+            <button type="submit">Сохранить изменения</button>
+            <a href="/list_page"><button type="button">Отмена</button></a>
         </div>
     </form>
 </body>

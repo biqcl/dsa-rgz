@@ -7,7 +7,6 @@ import os
 
 app = Flask(__name__)
 
-# Используем GitHub Secrets
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-key-for-local-only')
 
 # Настройка Flask-Login
@@ -15,9 +14,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login_page'
 
-# КОНФИГУРАЦИЯ БД - ОСТАЁТСЯ expense_diary
 DB_CONFIG = {
-    "dbname": "expense_diary",  # ← ТАК И ОСТАЁТСЯ!
+    "dbname": "expense_diary",
     "user": "postgres",
     "password": "postgres",
     "host": "localhost",
@@ -28,6 +26,7 @@ class User(UserMixin):
     def __init__(self, id, username):
         self.id = id
         self.username = username
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -56,23 +55,27 @@ def log_audit(user_id, action_type, record_id=None):
     cur.close()
     conn.close()
 
-# ========== HTML PAGES ==========
+
 @app.route('/')
 def home():
     return redirect(url_for('login_page'))
+
 
 @app.route('/login_page')
 def login_page():
     return render_template('login.html')
 
+
 @app.route('/register_page')
 def register_page():
     return render_template('register.html')
+
 
 @app.route('/add_page')
 @login_required
 def add_page():
     return render_template('add.html')
+
 
 @app.route('/list_page')
 @login_required
@@ -91,7 +94,7 @@ def list_page():
     log_audit(current_user.id, "view_list")
     return render_template('list.html', expenses=expenses)
 
-# ========== API ENDPOINTS ==========
+
 @app.route('/register', methods=['POST'])
 def register():
     if request.is_json:
@@ -130,14 +133,14 @@ def register():
         conn.commit()
         log_audit(user_id, "registration")
         
-        # АВТОМАТИЧЕСКИ ЛОГИНИМ ПОСЛЕ РЕГИСТРАЦИИ
+        # Автоматически входим после регистрации
         user = User(user_id, username)
-        login_user(user)  # ← ВОТ ЭТОЙ СТРОЧКИ У ВАС НЕТ!
+        login_user(user)
         
         if return_json:
             return jsonify({"message": "User registered", "user_id": user_id}), 201
         else:
-            return redirect(url_for('list_page'))  # перенаправляем на список расходов
+            return redirect(url_for('list_page'))  # Перенаправляем на список расходов
             
     except psycopg2.IntegrityError:
         if return_json:
@@ -189,12 +192,14 @@ def login():
     else:
         return render_template('login.html', error="Неверный логин или пароль")
 
+
 @app.route('/logout')
 @login_required
 def logout():
     log_audit(current_user.id, "logout")
     logout_user()
     return redirect(url_for('login_page'))
+
 
 @app.route('/add', methods=['POST'])
 @login_required
@@ -249,6 +254,7 @@ def add_expense():
     else:
         return redirect(url_for('list_page'))
 
+
 @app.route('/list', methods=['GET'])
 @login_required
 def list_expenses():
@@ -266,6 +272,7 @@ def list_expenses():
     
     log_audit(current_user.id, "view_list")
     return jsonify({"expenses": expenses})
+
 
 @app.route('/edit/<int:expense_id>', methods=['POST'])
 @login_required
@@ -295,11 +302,8 @@ def edit_expense(expense_id):
         else:
             return redirect(url_for('list_page'))
     
-    # ИСПРАВЛЕНИЕ SQL-INJECTION: 
-    # Вместо динамического построения запроса f-string используем отдельные проверки
-    
     try:
-        # Вариант 1: Если переданы все поля
+        # Переданы все поля
         if amount is not None and category is not None:
             amount_float = float(amount)
             if amount_float <= 0:
@@ -312,7 +316,7 @@ def edit_expense(expense_id):
                 WHERE id = %s
             """, (amount_float, category, description, expense_id))
             
-        # Вариант 2: Обновление только суммы
+        # Обновление только суммы
         elif amount is not None:
             amount_float = float(amount)
             if amount_float <= 0:
@@ -320,12 +324,12 @@ def edit_expense(expense_id):
             cur.execute("UPDATE expenses SET amount = %s WHERE id = %s", 
                        (amount_float, expense_id))
             
-        # Вариант 3: Обновление только категории
+        # Обновление только категории
         elif category is not None:
             cur.execute("UPDATE expenses SET category = %s WHERE id = %s", 
                        (category, expense_id))
             
-        # Вариант 4: Обновление только описания
+        # Обновление только описания
         elif description is not None:
             cur.execute("UPDATE expenses SET description = %s WHERE id = %s", 
                        (description, expense_id))
@@ -362,6 +366,7 @@ def edit_expense(expense_id):
         else:
             return redirect(url_for('list_page'))
 
+
 @app.route('/delete/<int:expense_id>', methods=['POST'])
 @login_required
 def delete_expense(expense_id):
@@ -384,6 +389,7 @@ def delete_expense(expense_id):
     log_audit(current_user.id, "delete", expense_id)
     return jsonify({"message": "Expense deleted"})
 
+
 @app.route('/audit', methods=['GET'])
 @login_required
 def get_audit():
@@ -402,10 +408,11 @@ def get_audit():
     return jsonify({"audit_logs": audit_logs})
 
 
+# Страница редактирования расхода
 @app.route('/edit_page/<int:expense_id>')
 @login_required
 def edit_page(expense_id):
-    """Страница редактирования расхода"""
+    
     # Проверка принадлежности
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -419,10 +426,11 @@ def edit_page(expense_id):
     
     return render_template('edit.html', expense=expense)
 
+
+# Обновление расхода через HTML форму
 @app.route('/update_expense/<int:expense_id>', methods=['POST'])
 @login_required
 def update_expense(expense_id):
-    """Обновление расхода через HTML форму"""
     # Проверка принадлежности
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -464,10 +472,11 @@ def update_expense(expense_id):
     log_audit(current_user.id, "edit", expense_id)
     return redirect(url_for('list_page'))
 
+
+# Удаление расхода для HTML (перенаправляет обратно)
 @app.route('/delete_html/<int:expense_id>', methods=['POST'])
 @login_required
 def delete_html(expense_id):
-    """Удаление расхода для HTML (перенаправляет обратно)"""
     # Проверка принадлежности
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -486,6 +495,7 @@ def delete_html(expense_id):
     
     log_audit(current_user.id, "delete", expense_id)
     return redirect(url_for('list_page')) 
+
 
 if __name__ == '__main__':
     from models import create_tables

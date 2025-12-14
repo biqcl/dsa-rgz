@@ -16,7 +16,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: expense_diary  # ← МЕНЯЕМ НА expense_diary!
+          POSTGRES_DB: expense_diary
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -43,13 +43,13 @@ jobs:
         FLASK_SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY || 'test-secret-for-ci' }}
         FLASK_DEBUG: 'False'
       run: |
-        echo "🔒 Running Bandit security check..."
+        echo "Running Bandit security check..."
         bandit -r app.py
-        echo "✅ Bandit check completed successfully!"
+        echo "Bandit check completed successfully!"
     
     - name: Run tests
       run: |
-        echo "🧪 Running unit tests..."
+        echo "Running unit tests..."
         python -m pytest test_app.py -v
         
   deploy:
@@ -60,5 +60,5 @@ jobs:
     steps:
     - name: Deploy to production
       run: |
-        echo "✅ All tests passed!"
-        echo "🚀 Ready for deployment"
+        echo "All tests passed!"
+        echo "Ready for deployment"
